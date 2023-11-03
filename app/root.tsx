@@ -66,7 +66,10 @@ export default function App() {
               id="search-form"
               role="search"
               onChange={(e) => {
-                submit(e.currentTarget);
+                const isFirstSearch = q === null;
+                submit(e.currentTarget, {
+                  replace: !isFirstSearch,
+                });
               }}
             >
               <input
