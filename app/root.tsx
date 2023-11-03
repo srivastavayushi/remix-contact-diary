@@ -10,6 +10,7 @@ import {
   NavLink,
   useLoaderData,
   useNavigation,
+  useSubmit,
 } from "@remix-run/react";
 import appStylesHref from "./app.css";
 import { json, redirect } from "@remix-run/node";
@@ -36,6 +37,11 @@ export const links: LinksFunction = () => [
 export default function App() {
   const { contacts, q } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
+  const submit = useSubmit();
+  // When nothing is happening, navigation.location will be undefined, but when the user navigates it will be populated with the next location while data loads. Then we check if they're searching with location.search
+  const searching =
+    navigation.location &&
+    new URLSearchParams(navigation.location.search).has("q");
 
   useEffect(() => {
     const searchField = document.getElementById("q");
@@ -56,16 +62,23 @@ export default function App() {
         <div id="sidebar">
           <h1>Remix Contacts</h1>
           <div>
-            <Form id="search-form" role="search">
+            <Form
+              id="search-form"
+              role="search"
+              onChange={(e) => {
+                submit(e.currentTarget);
+              }}
+            >
               <input
                 id="q"
                 aria-label="Search contacts"
                 defaultValue={q || ""}
+                className={searching ? "loading" : ""}
                 placeholder="Search"
                 type="search"
                 name="q"
               />
-              <div id="search-spinner" aria-hidden hidden={true} />
+              <div id="search-spinner" aria-hidden hidden={!searching} />
             </Form>
             <Form method="post">
               <button type="submit">New</button>
@@ -101,9 +114,12 @@ export default function App() {
             )}
           </nav>
         </div>
+        {/* avoid fading out the main screen when searching */}
         <div
           id="detail"
-          className={navigation.state === "loading" ? "loading" : ""}
+          className={
+            navigation.state === "loading" && !searching ? "loading" : ""
+          }
         >
           <Outlet />
         </div>
